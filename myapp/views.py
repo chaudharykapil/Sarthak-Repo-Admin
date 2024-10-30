@@ -2,7 +2,7 @@ import pickle
 from django.shortcuts import render
 from firebase import firebase
 import requests  # Import requests to catch HTTPError
-
+from .utils.utils import createPostslug
 config = {
     "apiKey": "AIzaSyAjimJxm2UZHP7L5rHIpAdBIWlDr2_NFKs",
     "authDomain": "news-in-briefs-db.firebaseapp.com",
@@ -29,6 +29,7 @@ def updateshorts(request):
             "summary": summary,
             "image_url": image_url,
             "news_url": news_url,
+            "post_slug":createPostslug(title),
             "category": category  # Add category to news data
         }
         
