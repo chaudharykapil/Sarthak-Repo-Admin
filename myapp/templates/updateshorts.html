@@ -190,6 +190,7 @@
                                     <th scope="col">Title</th>
                                     <th scope="col">Headline</th>
                                     <th scope="col">Category</th>
+                                    <th scope="col">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -200,6 +201,13 @@
                                             <td>{{ news_item.title }}</td>
                                             <td>{{ news_item.headline }}</td>
                                             <td>{{ news_item.category }}</td>
+                                            <td>
+                                                <form action="/edit/post" method="POST">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="post_id" readonly value="{{news_id}}" />
+                                                    <button type="submit">Edit</button>
+                                                </form>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 {% else %}

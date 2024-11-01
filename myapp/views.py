@@ -1,8 +1,10 @@
 import pickle
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from firebase import firebase
 import requests  # Import requests to catch HTTPError
-from .utils.utils import createPostslug
+from .utils.utils import createPostslug,get_categories
+
+from django.http import HttpRequest,JsonResponse
 config = {
     "apiKey": "AIzaSyAjimJxm2UZHP7L5rHIpAdBIWlDr2_NFKs",
     "authDomain": "news-in-briefs-db.firebaseapp.com",
@@ -85,23 +87,7 @@ def updateshorts(request):
 
         return True  # Indicate that the category was added successfully
 
-    def get_categories():
-        firebaseconn = firebase.FirebaseApplication(config["databaseURL"], None)
-        try:
-            categories = firebaseconn.get('NewsCategories', None)
-
-            # If categories are in list format, filter out None values
-            if isinstance(categories, list):
-                categories = [category for category in categories if category is not None]
-                return {str(index): category for index, category in enumerate(categories)}
-            elif isinstance(categories, dict):
-                return {str(key): value for key, value in categories.items() if value is not None}
-            
-            return {}  # Return an empty dictionary if categories is None or not a dict
-        except requests.exceptions.HTTPError as e:
-            print(f"HTTP Error: {e}")
-            return {}  # Return an empty dictionary on error
-
+    
     def get_news():
         firebaseconn = firebase.FirebaseApplication(config["databaseURL"], None)
         try:
@@ -154,3 +140,41 @@ def updateshorts(request):
     context['news_message'] = "No news found." if not context['news'] else ""  # Message if no news found
 
     return render(request=request, template_name='updateshorts.html', context=context)
+
+
+def ShoweditPost(request:HttpRequest):
+
+    post_id = request.POST.get("post_id")
+    firebaseconn = firebase.FirebaseApplication(config["databaseURL"], None)
+    data = firebaseconn.get("/News",post_id)
+
+    print(data)
+    context = {}
+    context["news"] = data
+    context['categories'] = get_categories()
+    context["post_id"] = post_id
+    return render(request=request,template_name="editPosts.html",context=context)
+
+def editPost(request:HttpRequest):
+    Title = request.POST.get("title")
+    Headline = request.POST.get("headline")
+    Summary = request.POST.get("summary")
+    ImageUrl = request.POST.get("imageurl")
+    NewsUrl = request.POST.get("newsurl")
+    post_id = request.POST.get("post_id")
+    Category = request.POST.get("category")
+    print(request.POST)
+    
+    firebaseconn = firebase.FirebaseApplication(config["databaseURL"], None)
+    news_data = {
+            "title": Title,
+            "headline": Headline,
+            "summary": Summary,
+            "image_url": ImageUrl,
+            "news_url": NewsUrl,
+            "post_slug":createPostslug(Title),
+            "category": Category  # Add category to news data
+    }
+    firebaseconn.put(f"/News",post_id,news_data)
+    return redirect("/")
+    
